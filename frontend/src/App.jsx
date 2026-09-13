@@ -197,46 +197,49 @@ function App() {
   const pickExample = (example) => updateExpression(example, example.length);
 
   return (
-    <main className="app">
-      <TopBar backend={backend} />
+    <div className="stage">
+      <div className="backdrop" aria-hidden="true" />
+      <main className="app">
+        <TopBar backend={backend} />
 
-      <div className="app__body">
-        <div className="workspace">
-          <ExpressionPanel
-            expression={expression}
-            status={status}
-            result={result}
-            error={error}
-            tokens={tokens}
-            brackets={brackets}
-            tokenCount={tokenCount}
-            inputRef={inputRef}
-            onChange={(value) => updateExpression(value)}
-            onKeyDown={handleKeyDown}
-            onPickExample={pickExample}
-          />
+        <div className="app__body">
+          <div className="workspace">
+            <ExpressionPanel
+              expression={expression}
+              status={status}
+              result={result}
+              error={error}
+              tokens={tokens}
+              brackets={brackets}
+              tokenCount={tokenCount}
+              inputRef={inputRef}
+              onChange={(value) => updateExpression(value)}
+              onKeyDown={handleKeyDown}
+              onPickExample={pickExample}
+            />
 
-          <Keypad
-            disabled={status === "loading"}
-            loading={status === "loading"}
-            onInsert={insert}
-            onClear={clear}
-            onBackspace={backspace}
-            onSubmit={submit}
-            onToggleSign={toggleSign}
+            <Keypad
+              disabled={status === "loading"}
+              loading={status === "loading"}
+              onInsert={insert}
+              onClear={clear}
+              onBackspace={backspace}
+              onSubmit={submit}
+              onToggleSign={toggleSign}
+            />
+          </div>
+
+          <HistoryPanel
+            items={history.items}
+            status={history.status}
+            query={query}
+            activeKey={activeKey}
+            onQueryChange={setQuery}
+            onPick={pickHistory}
           />
         </div>
-
-        <HistoryPanel
-          items={history.items}
-          status={history.status}
-          query={query}
-          activeKey={activeKey}
-          onQueryChange={setQuery}
-          onPick={pickHistory}
-        />
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 
