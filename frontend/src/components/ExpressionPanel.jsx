@@ -160,9 +160,13 @@ function ExpressionPanel({
       {status === "offline" && error && (
         <div className="expr-error expr-error--offline" role="alert">
           <div>
-            <div className="expr-error__message">Сервис недоступен</div>
+            <div className="expr-error__message">
+              {error.code === "NOT_IMPLEMENTED" ? "Ещё не реализовано" : "Сервис недоступен"}
+            </div>
             <div className="expr-error__detail">
-              {error.message}. Проверьте, что backend запущен, и нажмите Enter ещё раз.
+              {error.code === "NOT_IMPLEMENTED"
+                ? "Backend отвечает, но POST /api/v1/calculate пока возвращает 501 — вычислитель ещё не готов."
+                : `${error.message}. Проверьте, что backend запущен, и нажмите Enter ещё раз.`}
             </div>
           </div>
           <span className="chip chip--code">{error.status ?? "—"} · {error.code}</span>
