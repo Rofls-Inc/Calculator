@@ -4,7 +4,6 @@ from backend.app.extensions import db
 
 
 class Calculation(db.Model):
-    """A successful calculation stored for one anonymous browser client."""
 
     __tablename__ = "calculations"
 
