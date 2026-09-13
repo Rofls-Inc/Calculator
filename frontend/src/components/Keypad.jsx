@@ -57,7 +57,6 @@ function Keypad({ disabled, loading, onInsert, onClear, onBackspace, onSubmit, o
         >
           ±
         </button>
-        <span className="keypad__hint">Enter — посчитать · Esc — очистить</span>
       </div>
 
       <div className="keypad__grid">

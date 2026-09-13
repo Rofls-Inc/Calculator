@@ -7,7 +7,7 @@ import Keypad from "./components/Keypad.jsx";
 import TopBar from "./components/TopBar.jsx";
 import { useBackendStatus } from "./hooks/useBackendStatus.js";
 import { useHistory } from "./hooks/useHistory.js";
-import { bracketStats, countTokens, tokenize } from "./lib/tokenize.js";
+import { bracketStats, tokenize } from "./lib/tokenize.js";
 
 
 const MAX_EXPRESSION_LENGTH = 512;
@@ -30,7 +30,6 @@ function App() {
 
   const tokens = useMemo(() => tokenize(expression), [expression]);
   const brackets = useMemo(() => bracketStats(tokens), [tokens]);
-  const tokenCount = useMemo(() => countTokens(tokens), [tokens]);
 
   // Restore the caret after programmatic edits (keypad, ±, history pick).
   useEffect(() => {
@@ -211,7 +210,6 @@ function App() {
               error={error}
               tokens={tokens}
               brackets={brackets}
-              tokenCount={tokenCount}
               inputRef={inputRef}
               onChange={(value) => updateExpression(value)}
               onKeyDown={handleKeyDown}

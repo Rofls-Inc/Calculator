@@ -53,7 +53,6 @@ function ExpressionPanel({
   error,
   tokens,
   brackets,
-  tokenCount,
   inputRef,
   onChange,
   onKeyDown,
@@ -77,17 +76,11 @@ function ExpressionPanel({
     <section className={cardClass} aria-label="Выражение">
       <header className="expr-card__header">
         <span className="section-label">Выражение</span>
-        <div className="expr-card__chips">
-          <span
-            className={`chip ${brackets.balanced ? "chip--ok" : "chip--error"}`}
-            title="Закрывающих / открывающих скобок"
-          >
+        {!brackets.balanced && !isEmpty && (
+          <span className="expr-card__note">
             скобки {brackets.close}/{brackets.open}
           </span>
-          <span className="chip">
-            {tokenCount} {pluralTokens(tokenCount)}
-          </span>
-        </div>
+        )}
       </header>
 
       <div className="expr-input">
@@ -138,7 +131,7 @@ function ExpressionPanel({
       )}
 
       {status === "editing" && (
-        <div className="expr-footer expr-hint">Enter или «=» — отправить на backend</div>
+        <div className="expr-footer expr-hint">Enter — посчитать · Esc — очистить</div>
       )}
 
       {status === "loading" && (
@@ -197,15 +190,6 @@ function ResultBlock({ result }) {
       <CopyButton value={formatted.exact} />
     </div>
   );
-}
-
-
-function pluralTokens(count) {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return "токен";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "токена";
-  return "токенов";
 }
 
 
