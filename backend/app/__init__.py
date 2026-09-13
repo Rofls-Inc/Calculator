@@ -6,6 +6,7 @@ from backend.app.api.health import health_bp
 from backend.app.api.history import history_bp
 from backend.app.config import Config
 from backend.app.extensions import db
+from backend.app.models import Calculation
 
 
 def create_app(test_config: dict | None = None) -> Flask:
@@ -26,5 +27,10 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.register_blueprint(health_bp, url_prefix="/api/v1")
     app.register_blueprint(calculations_bp, url_prefix="/api/v1")
     app.register_blueprint(history_bp, url_prefix="/api/v1")
+
+    # Importing Calculation above registers its table in SQLAlchemy metadata.
+    # create_all is sufficient for Sprint 0; migrations can be added later.
+    with app.app_context():
+        db.create_all()
 
     return app
