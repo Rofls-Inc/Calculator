@@ -23,7 +23,7 @@
 | Вычислитель | собственный parser или безопасный allow-list Python AST |
 | База | SQLite, Flask-SQLAlchemy |
 | Frontend | React 19, Vite, Axios, CSS |
-| Тесты | Pytest; frontend-тесты добавляет QA |
+| Тесты | Pytest для backend |
 | Интеграция | GitHub Actions, pull requests |
 
 Docker, MySQL и внешние облачные сервисы для Sprint 0 не нужны.
@@ -45,19 +45,19 @@ Flask :5000
 Подробности находятся в [описании архитектуры](docs/architecture.md), а
 согласованный формат запросов - в [контракте API](docs/api.md).
 
-## Состояние стартового каркаса
+## Текущее состояние
 
-Уже подготовлены:
+В интеграционной ветке `dev` реализованы:
 
-- Flask application factory и разделённые API-модули;
-- рабочий `GET /api/v1/health`;
-- места для calculator service, моделей и repository;
-- React/Vite-каркас с проверкой доступности backend;
-- smoke-тест backend;
-- начальный CI для тестов и frontend build.
-
-`/calculate` и `/history` пока специально возвращают HTTP 501. Их реализуют
-участники команды в отдельных ветках.
+- Flask application factory и API `GET /health`, `POST /calculate`,
+  `GET /history`;
+- безопасный parser арифметических выражений без `eval`;
+- проверка типа, пустого ввода, деления на ноль и лимита в 512 символов;
+- SQLite-модель и repository для сохранения успешных вычислений;
+- разделение истории клиентов по cookie `calculator_user_id`;
+- React/Vite-интерфейс, подключённый к вычислению и истории;
+- backend-набор из 127 проходящих тестов;
+- GitHub Actions с запуском backend-тестов через Pytest.
 
 ## Структура
 
@@ -113,8 +113,38 @@ Flask. Локальный `.env` не нужен.
 
 ### Тесты
 
+Из корня проекта, с активированным venv:
+ 
 ```powershell
 python -m pytest
+```
+ 
+Форма `python -m pytest` обязательна: она добавляет корень проекта в
+`sys.path`, и только так работает импорт `backend.app`. Команда `pytest` без
+`python -m`, а также запуск из папки `tests`, завершатся ошибкой
+`ModuleNotFoundError: No module named 'backend'`.
+ 
+Состав набора:
+ 
+| Файл | Что покрывает |
+|---|---|
+| `tests/test_health.py` | доступность `GET /api/v1/health` |
+| `tests/test_calculator_service.py` | разбор выражений, унарные знаки, деление на ноль, отклонение Python-кода |
+| `tests/test_calculate_api.py` | `POST /api/v1/calculate`: формат ответа, ошибки 400, лимит 512, cookie, устойчивость к мусорному вводу |
+| `tests/test_history_api.py` | `GET /api/v1/history`: сортировка, разделение по клиентам, сохранность после перезапуска |
+| `tests/test_repository.py` | модель `Calculation` и repository истории |
+ 
+Тесты используют SQLite в памяти и не трогают рабочую базу в `instance/`.
+Проверка сохранности истории между запусками создаёт временный файл базы,
+который удаляется автоматически.
+
+Полезные варианты запуска:
+ 
+```powershell
+python -m pytest -v # имя каждого теста отдельной строкой
+python -m pytest tests/test_calculate_api.py # один файл
+python -m pytest -k cookie # тесты, в имени которых есть cookie
+python -m pytest -x # остановиться на первом падении
 ```
 
 ## Распределение работы
@@ -216,14 +246,12 @@ feat(frontend): add clickable history
 
 - `tests/`
 - `.github/workflows/ci.yml`
-- frontend test files
 - финальный раздел README
 
 Задачи:
 
 - покрыть parser, API, SQLite и разделение истории тестами;
 - проверить пустой JSON, неверные скобки, `1/0`, текст и строку >512;
-- добавить frontend-тесты ключевого взаимодействия;
 - обновлять тесты после объединения feature-веток;
 - проверить CI, выполнить финальный smoke-test;
 - подготовить сценарий живого демо и резервное видео.
@@ -236,26 +264,26 @@ feat(frontend): add clickable history
 ```text
 test(calculator): cover valid and invalid expressions
 test(history): verify client isolation and persistence
-ci: verify backend tests and frontend build
+ci: verify backend tests
 docs: add demonstration checklist
 ```
 
-## Порядок работы
+## Порядок интеграции
 
-1. Владелец репозитория проверяет каркас и пушит его в `main`.
-2. Каждый участник создаёт свою ветку от свежего `main`.
-3. Все ориентируются на `docs/api.md`; формат API не меняется молча.
-4. Студент 2 первым объединяет SQLite/repository.
-5. Студент 1 обновляет ветку и подключает сохранение результата.
-6. Затем объединяются frontend и актуализированные тесты.
-7. Каждый pull request проверяет хотя бы один другой участник.
+1. Участники выполняют свою часть в отдельных feature-ветках.
+2. Pull request направляется в интеграционную ветку `dev`.
+3. Все части проверяются совместно по контракту `docs/api.md`.
+4. Перед финальным слиянием выполняется `python -m pytest`, а интерфейс
+   проверяется вручную через `npm run dev`.
+5. После успешного CI ветка `dev` сливается в `main`.
+6. Каждый pull request проверяет хотя бы один другой участник.
 
 Не следует одновременно редактировать чужую основную папку без согласования.
 
 ## Definition of Done
 
 - `python -m pytest` проходит;
-- `npm run build` проходит;
+- frontend запускается через `npm run dev`;
 - пример из задания возвращает результат;
 - некорректные скобки и деление на ноль возвращают HTTP 400;
 - сервер не падает на длинном или текстовом вводе;
