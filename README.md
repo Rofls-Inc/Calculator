@@ -1,96 +1,120 @@
-# Calculator Service - Sprint 0
+# Calculator Service — Sprint 0
 
-Командный учебный проект: веб-клиент отправляет арифметическое выражение в
-сервис, сервис вычисляет результат, сообщает об ошибках и хранит историю
-конкретного клиента в SQLite. Запуск локальный, Docker не используется.
+Учебное веб-приложение для вычисления арифметических выражений. React-клиент
+отправляет выражение во Flask API, backend безопасно вычисляет результат и
+сохраняет историю текущего браузера в SQLite.
 
-## Что требуется реализовать
+## Итог работы
 
-- GUI в браузере с вводом выражения и кнопками калькулятора.
-- Вычисление только на backend, а не в React.
-- Поддержка чисел, скобок, `+`, `-`, `*`, `/` и унарного минуса.
-- Понятная ошибка для некорректного выражения и деления на ноль.
-- Хранение всех успешных вычислений в SQLite.
-- История только текущего клиента по cookie.
-- Клик по записи истории возвращает выражение в поле ввода.
-- Живое демо и резервная видеозапись.
+В проекте реализованы:
+
+- интерфейс калькулятора с вводом с клавиатуры и экранными кнопками;
+- числа, скобки, операции `+`, `-`, `*`, `/` и унарные знаки;
+- собственный parser без использования `eval`;
+- обработка пустого, некорректного и слишком длинного ввода;
+- понятная ошибка при делении на ноль;
+- сохранение успешных вычислений в SQLite;
+- отдельная история для каждого браузера по cookie `calculator_user_id`;
+- повторный выбор выражения из истории;
+- 127 backend-тестов и автоматический запуск Pytest в GitHub Actions.
+
+Docker, MySQL и отдельный сервер базы данных не требуются.
 
 ## Технологии
 
 | Часть | Технологии |
 |---|---|
 | Backend | Python 3.12, Flask, Flask-CORS |
-| Вычислитель | собственный parser или безопасный allow-list Python AST |
-| База | SQLite, Flask-SQLAlchemy |
+| Вычислитель | собственный рекурсивный parser |
+| База данных | SQLite, Flask-SQLAlchemy |
 | Frontend | React 19, Vite, Axios, CSS |
-| Тесты | Pytest для backend |
-| Интеграция | GitHub Actions, pull requests |
+| Тесты и CI | Pytest, GitHub Actions |
 
-Docker, MySQL и внешние облачные сервисы для Sprint 0 не нужны.
-
-## Архитектура
+## Как работает проект
 
 ```text
-React :5173
-    |
-    | POST /api/v1/calculate
-    | GET  /api/v1/history
-    v
-Flask :5000
-    |-- calculator service
-    |-- client cookie
-    `-- history repository --> SQLite
+Браузер с React :5173
+        |
+        | POST /api/v1/calculate
+        | GET  /api/v1/history
+        v
+Flask API :5000
+        |-- проверка и разбор выражения
+        |-- идентификация клиента по cookie
+        `-- repository --> SQLite
 ```
 
-Подробности находятся в [описании архитектуры](docs/architecture.md), а
-согласованный формат запросов - в [контракте API](docs/api.md).
+1. Frontend отправляет введённое выражение в `POST /api/v1/calculate`.
+2. Backend проверяет длину и синтаксис, затем parser вычисляет результат.
+3. Успешный результат сохраняется через repository в SQLite.
+4. Flask устанавливает случайную cookie, по которой определяется история
+   конкретного браузера.
+5. Frontend получает историю через `GET /api/v1/history` и показывает её рядом
+   с калькулятором.
 
-## Текущее состояние
+Файл базы `instance/calculator.db` создаётся автоматически при первом запуске
+backend и не добавляется в Git.
 
-В интеграционной ветке `dev` реализованы:
+Подробный контракт запросов находится в [`docs/api.md`](docs/api.md), описание
+слоёв приложения — в [`docs/architecture.md`](docs/architecture.md).
 
-- Flask application factory и API `GET /health`, `POST /calculate`,
-  `GET /history`;
-- безопасный parser арифметических выражений без `eval`;
-- проверка типа, пустого ввода, деления на ноль и лимита в 512 символов;
-- SQLite-модель и repository для сохранения успешных вычислений;
-- разделение истории клиентов по cookie `calculator_user_id`;
-- React/Vite-интерфейс, подключённый к вычислению и истории;
-- backend-набор из 127 проходящих тестов;
-- GitHub Actions с запуском backend-тестов через Pytest.
-
-## Структура
+## Структура проекта
 
 ```text
 backend/
   app/
     api/             # HTTP endpoints
     models/          # SQLAlchemy models
-    repositories/    # SQLite access
-    services/        # expression parser and business logic
+    repositories/    # работа с SQLite
+    services/        # parser и идентификация клиента
   run.py
 frontend/
   src/
-    api/             # Axios client
-tests/               # Pytest tests
-docs/                # architecture and API contract
-.github/workflows/   # continuous integration
+    api/             # Axios-клиент
+    components/      # компоненты интерфейса
+    hooks/           # состояние backend и истории
+tests/               # backend-тесты Pytest
+docs/                # архитектура и API-контракт
+.github/workflows/   # проверка backend в GitHub Actions
 ```
 
-## Локальный запуск
+## Необходимые программы
 
-### Backend - Windows PowerShell
+- Python 3.12;
+- Node.js версии 20.19 или новее вместе с npm;
+- Git — только для клонирования и работы с репозиторием.
 
-Из корня проекта:
+Проверить установку можно командами:
+
+```text
+python --version
+node --version
+npm --version
+git --version
+```
+
+## Запуск на Windows
+
+Все команды backend выполняются из корня репозитория.
+
+### 1. Подготовить Python
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements-dev.txt
-python -m backend.run
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 ```
 
-Проверка:
+Виртуальное окружение создаётся только один раз. Активация PowerShell не
+обязательна: команды ниже напрямую используют Python из `.venv`.
+
+### 2. Запустить backend
+
+```powershell
+.\.venv\Scripts\python.exe -m backend.run
+```
+
+Backend будет доступен по адресу `http://127.0.0.1:5000`. Проверка:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:5000/api/v1/health
@@ -98,196 +122,106 @@ Invoke-RestMethod http://127.0.0.1:5000/api/v1/health
 
 Ожидаемый ответ: `{"status":"ok"}`.
 
-### Frontend
+### 3. Запустить frontend
 
-Во втором терминале:
+Откройте второе окно PowerShell, перейдите в корень проекта и выполните:
 
 ```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-Открыть `http://127.0.0.1:5173`. Vite автоматически перенаправляет `/api` на
-Flask. Локальный `.env` не нужен.
+Откройте `http://127.0.0.1:5173`. Во время разработки Vite автоматически
+перенаправляет запросы `/api` на Flask. Локальный `.env` не нужен.
 
-### Тесты
+Повторно устанавливать зависимости не требуется. При следующих запусках
+достаточно запустить backend и выполнить `npm run dev` в папке `frontend`.
 
-Из корня проекта, с активированным venv:
- 
+## Запуск и сборка на Linux
+
+Для Debian/Ubuntu Python можно подготовить так:
+
+```bash
+sudo apt update
+sudo apt install python3 python3-venv python3-pip
+```
+
+Node.js с npm устанавливается отдельно. Требуется Node.js 20.19 или новее.
+
+### 1. Подготовить и запустить backend
+
+Из корня репозитория:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
+python -m backend.run
+```
+
+### 2. Запустить frontend
+
+Во втором терминале, также из корня репозитория:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Приложение откроется по адресу `http://127.0.0.1:5173`.
+
+### 3. Собрать frontend
+
+```bash
+cd frontend
+npm ci
+npm run build
+```
+
+Готовые статические файлы появятся в `frontend/dist/`. Для совместной локальной
+работы frontend и backend используется `npm run dev`, потому что именно режим
+разработки содержит настроенный proxy на Flask.
+
+## Запуск тестов
+
+Windows, из корня проекта:
+
 ```powershell
+.\.venv\Scripts\python.exe -m pytest
+```
+
+Linux, с активированным виртуальным окружением:
+
+```bash
 python -m pytest
 ```
- 
-Форма `python -m pytest` обязательна: она добавляет корень проекта в
-`sys.path`, и только так работает импорт `backend.app`. Команда `pytest` без
-`python -m`, а также запуск из папки `tests`, завершатся ошибкой
-`ModuleNotFoundError: No module named 'backend'`.
- 
-Состав набора:
- 
-| Файл | Что покрывает |
-|---|---|
-| `tests/test_health.py` | доступность `GET /api/v1/health` |
-| `tests/test_calculator_service.py` | разбор выражений, унарные знаки, деление на ноль, отклонение Python-кода |
-| `tests/test_calculate_api.py` | `POST /api/v1/calculate`: формат ответа, ошибки 400, лимит 512, cookie, устойчивость к мусорному вводу |
-| `tests/test_history_api.py` | `GET /api/v1/history`: сортировка, разделение по клиентам, сохранность после перезапуска |
-| `tests/test_repository.py` | модель `Calculation` и repository истории |
- 
-Тесты используют SQLite в памяти и не трогают рабочую базу в `instance/`.
-Проверка сохранности истории между запусками создаёт временный файл базы,
-который удаляется автоматически.
 
-Полезные варианты запуска:
- 
-```powershell
-python -m pytest -v # имя каждого теста отдельной строкой
-python -m pytest tests/test_calculate_api.py # один файл
-python -m pytest -k cookie # тесты, в имени которых есть cookie
-python -m pytest -x # остановиться на первом падении
-```
+Тесты проверяют parser, API, обработку ошибок, SQLite, cookie, разделение
+истории между клиентами и сохранение истории после перезапуска. Рабочая база
+при тестировании не изменяется.
 
-## Распределение работы
+## Быстрая ручная проверка
 
-### Студент 1 - Backend: parser и calculate API
+После запуска обеих частей приложения:
 
-Ветка: `feature/calculator-engine`
+1. Вычислить `2 + 2`.
+2. Проверить выражение `(12 + 22 * 7) / (33 + (12 * 3 - 8)) * 3`.
+3. Ввести `1 / 0` и убедиться, что показана ошибка.
+4. Обновить страницу и проверить, что успешные вычисления остались в истории.
+5. Открыть приватное окно браузера и убедиться, что его история пустая.
 
-Основные файлы:
+Остановить frontend или backend можно сочетанием `Ctrl+C` в соответствующем
+терминале.
 
-- `backend/app/services/calculator.py`
-- `backend/app/api/calculations.py`
-- `docs/api.md`, если контракт уточняется
+## Частые проблемы
 
-Задачи:
-
-- реализовать вычислитель без сырого `eval`;
-- проверить тип, пустую строку и лимит 512 символов;
-- поддержать числа, скобки, `+`, `-`, `*`, `/`, унарные знаки;
-- реализовать `POST /api/v1/calculate`;
-- вернуть единый JSON для syntax error и division by zero;
-- после объединения SQLite сохранять успешный результат через repository.
-
-Готово, когда пример из задания считается, а мусорный ввод быстро возвращает
-HTTP 400 и не роняет сервер.
-
-Рекомендуемые коммиты:
-
-```text
-feat(calculator): implement safe expression parser
-feat(api): implement calculate endpoint
-fix(api): validate expression input
-```
-
-### Студент 2 - Data и local run: SQLite/history
-
-Ветка: `feature/sqlite-history`
-
-Основные файлы:
-
-- `backend/app/models/`
-- `backend/app/repositories/`
-- `backend/app/api/history.py`
-- `backend/app/__init__.py`
-- `.gitignore` и раздел запуска README при необходимости
-
-Задачи:
-
-- создать модель `Calculation` по таблице из `docs/architecture.md`;
-- создавать таблицы при старте приложения;
-- реализовать repository: добавить вычисление и получить историю пользователя;
-- создать безопасный случайный `calculator_user_id` cookie;
-- реализовать `GET /api/v1/history` с сортировкой от новых к старым;
-- проверить сохранение истории после перезапуска;
-- передать Студенту 1 функцию repository для записи результата.
-
-Готово, когда два браузерных клиента видят разные истории, а база появляется
-автоматически в `instance/` и не попадает в Git.
-
-Рекомендуемые коммиты:
-
-```text
-feat(database): add calculation model and SQLite setup
-feat(history): add calculation repository
-feat(api): implement client history endpoint
-```
-
-### Студент 3 - Frontend
-
-Ветка: `feature/calculator-ui`
-
-Основные файлы: `frontend/src/`.
-
-Задачи:
-
-- заменить стартовую страницу интерфейсом калькулятора;
-- добавить текстовый ввод и кнопки цифр/операторов;
-- отправлять строку в `POST /api/v1/calculate`;
-- показывать результат, loading и сообщения об ошибках;
-- получать `GET /api/v1/history`;
-- сделать записи истории кликабельными;
-- обеспечить удобное отображение длинного выражения.
-
-Готово, когда пользователь выполняет весь сценарий задания только через GUI.
-
-Рекомендуемые коммиты:
-
-```text
-feat(frontend): build calculator interface
-feat(frontend): connect calculation API
-feat(frontend): add clickable history
-```
-
-### Студент 4 - QA, CI и демонстрация
-
-Ветка: `test/sprint-zero`
-
-Основные файлы:
-
-- `tests/`
-- `.github/workflows/ci.yml`
-- финальный раздел README
-
-Задачи:
-
-- покрыть parser, API, SQLite и разделение истории тестами;
-- проверить пустой JSON, неверные скобки, `1/0`, текст и строку >512;
-- обновлять тесты после объединения feature-веток;
-- проверить CI, выполнить финальный smoke-test;
-- подготовить сценарий живого демо и резервное видео.
-
-Готово, когда CI зелёный и весь демонстрационный сценарий повторяется на чистой
-машине по README.
-
-Рекомендуемые коммиты:
-
-```text
-test(calculator): cover valid and invalid expressions
-test(history): verify client isolation and persistence
-ci: verify backend tests
-docs: add demonstration checklist
-```
-
-## Порядок интеграции
-
-1. Участники выполняют свою часть в отдельных feature-ветках.
-2. Pull request направляется в интеграционную ветку `dev`.
-3. Все части проверяются совместно по контракту `docs/api.md`.
-4. Перед финальным слиянием выполняется `python -m pytest`, а интерфейс
-   проверяется вручную через `npm run dev`.
-5. После успешного CI ветка `dev` сливается в `main`.
-6. Каждый pull request проверяет хотя бы один другой участник.
-
-Не следует одновременно редактировать чужую основную папку без согласования.
-
-## Definition of Done
-
-- `python -m pytest` проходит;
-- frontend запускается через `npm run dev`;
-- пример из задания возвращает результат;
-- некорректные скобки и деление на ноль возвращают HTTP 400;
-- сервер не падает на длинном или текстовом вводе;
-- история сохраняется в SQLite и разделяется по клиентам;
-- запись истории кликабельна во frontend;
-- проект запускается по README без Docker;
-- подготовлены живое демо и резервная видеозапись.
+- `npm` не распознаётся — установите Node.js вместе с npm и заново откройте
+  терминал.
+- `No module named backend` — запускайте Python из корня репозитория.
+- Порт 5000 или 5173 занят — остановите ранее запущенный процесс сочетанием
+  `Ctrl+C`.
+- Интерфейс пишет, что backend недоступен — проверьте, что Flask запущен на
+  `http://127.0.0.1:5000`.
