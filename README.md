@@ -113,8 +113,38 @@ Flask. Локальный `.env` не нужен.
 
 ### Тесты
 
+Из корня проекта, с активированным venv:
+ 
 ```powershell
 python -m pytest
+```
+ 
+Форма `python -m pytest` обязательна: она добавляет корень проекта в
+`sys.path`, и только так работает импорт `backend.app`. Команда `pytest` без
+`python -m`, а также запуск из папки `tests`, завершатся ошибкой
+`ModuleNotFoundError: No module named 'backend'`.
+ 
+Состав набора:
+ 
+| Файл | Что покрывает |
+|---|---|
+| `tests/test_health.py` | доступность `GET /api/v1/health` |
+| `tests/test_calculator_service.py` | разбор выражений, унарные знаки, деление на ноль, отклонение Python-кода |
+| `tests/test_calculate_api.py` | `POST /api/v1/calculate`: формат ответа, ошибки 400, лимит 512, cookie, устойчивость к мусорному вводу |
+| `tests/test_history_api.py` | `GET /api/v1/history`: сортировка, разделение по клиентам, сохранность после перезапуска |
+| `tests/test_repository.py` | модель `Calculation` и repository истории |
+ 
+Тесты используют SQLite в памяти и не трогают рабочую базу в `instance/`.
+Проверка сохранности истории между запусками создаёт временный файл базы,
+который удаляется автоматически.
+
+Полезные варианты запуска:
+ 
+```powershell
+python -m pytest -v # имя каждого теста отдельной строкой
+python -m pytest tests/test_calculate_api.py # один файл
+python -m pytest -k cookie # тесты, в имени которых есть cookie
+python -m pytest -x # остановиться на первом падении
 ```
 
 ## Распределение работы
