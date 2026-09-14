@@ -113,10 +113,6 @@ def test_long_flat_expression():
     assert evaluate_expression("1+" * 200 + "1") == 201
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-1: глубокая вложенность скобок даёт RecursionError вместо ExpressionError",
-)
 def test_deeply_nested_parentheses_raise_expression_error():
     """Вложенность 249 - это 499 символов, то есть в пределах лимита 512"""
     expression = "(" * 249 + "1" + ")" * 249

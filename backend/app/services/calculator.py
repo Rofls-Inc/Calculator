@@ -165,8 +165,11 @@ def evaluate_expression(expression: str) -> int | float:
     if not expression.strip():
         raise ExpressionError("Пустое выражение")
     
-    if len(expression) >= 512:
+    if len(expression) > 512:
         raise ExpressionError("Слишком длинное выражение")
 
     tokens = _tokenize(expression)
-    return _Parser(tokens).parse()
+    try:
+        return _Parser(tokens).parse()
+    except RecursionError as error:
+        raise ExpressionError("Слишком глубокая вложенность скобок") from error

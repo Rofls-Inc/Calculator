@@ -39,20 +39,12 @@ def test_valid_expressions_return_200(client, expression, expected):
     assert float(response.get_json()["result"]) == pytest.approx(expected)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-2: docs/api.md описывает result строкой, эндпоинт отдаёт число",
-)
 def test_result_is_a_string_per_api_contract(client):
     response = calculate(client, "2+2")
 
     assert isinstance(response.get_json()["result"], str)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-2: /calculate отдаёт число, /history - строку; типы должны совпадать",
-)
 def test_result_type_matches_history(client):
     calculated = calculate(client, "6/3").get_json()["result"]
     stored = history_items(client)[0]["result"]
@@ -139,10 +131,6 @@ def test_expression_just_under_limit_is_accepted(client):
     assert calculate(client, expression).status_code == 200
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-3: проверка len >= 512 отсекает ровно 512, контракт разрешает 512",
-)
 def test_expression_at_exact_limit_is_accepted(client):
     expression = "1+" * ((MAX_EXPRESSION_LENGTH - 2) // 2) + "11"
     assert len(expression) == MAX_EXPRESSION_LENGTH
@@ -181,10 +169,6 @@ def test_garbage_input_does_not_crash_server(crash_safe_client, expression):
     assert crash_safe_client.get("/api/v1/health").status_code == 200
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-1: вложенные скобки в пределах лимита дают HTTP 500",
-)
 def test_deeply_nested_parentheses_return_400(crash_safe_client):
     """499 символов - в пределах лимита 512, значит отвечать должен парсер"""
     expression = "(" * 249 + "1" + ")" * 249
