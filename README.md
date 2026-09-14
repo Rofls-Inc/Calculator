@@ -23,7 +23,7 @@
 | Вычислитель | собственный parser или безопасный allow-list Python AST |
 | База | SQLite, Flask-SQLAlchemy |
 | Frontend | React 19, Vite, Axios, CSS |
-| Тесты | Pytest для backend; сборка frontend через Vite |
+| Тесты | Pytest для backend |
 | Интеграция | GitHub Actions, pull requests |
 
 Docker, MySQL и внешние облачные сервисы для Sprint 0 не нужны.
@@ -57,7 +57,7 @@ Flask :5000
 - разделение истории клиентов по cookie `calculator_user_id`;
 - React/Vite-интерфейс, подключённый к вычислению и истории;
 - backend-набор из 127 проходящих тестов;
-- GitHub Actions с запуском Pytest и сборкой frontend.
+- GitHub Actions с запуском backend-тестов через Pytest.
 
 ## Структура
 
@@ -264,7 +264,7 @@ feat(frontend): add clickable history
 ```text
 test(calculator): cover valid and invalid expressions
 test(history): verify client isolation and persistence
-ci: verify backend tests and frontend build
+ci: verify backend tests
 docs: add demonstration checklist
 ```
 
@@ -273,8 +273,8 @@ docs: add demonstration checklist
 1. Участники выполняют свою часть в отдельных feature-ветках.
 2. Pull request направляется в интеграционную ветку `dev`.
 3. Все части проверяются совместно по контракту `docs/api.md`.
-4. Перед финальным слиянием выполняются `python -m pytest` и
-   `npm run build`.
+4. Перед финальным слиянием выполняется `python -m pytest`, а интерфейс
+   проверяется вручную через `npm run dev`.
 5. После успешного CI ветка `dev` сливается в `main`.
 6. Каждый pull request проверяет хотя бы один другой участник.
 
@@ -283,7 +283,7 @@ docs: add demonstration checklist
 ## Definition of Done
 
 - `python -m pytest` проходит;
-- `npm run build` проходит;
+- frontend запускается через `npm run dev`;
 - пример из задания возвращает результат;
 - некорректные скобки и деление на ноль возвращают HTTP 400;
 - сервер не падает на длинном или текстовом вводе;
