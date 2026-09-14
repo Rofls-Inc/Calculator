@@ -84,8 +84,3 @@ export function bracketStats(tokens) {
     errorKind,
   };
 }
-
-
-export function countTokens(tokens) {
-  return tokens.filter((token) => token.type !== "space").length;
-}

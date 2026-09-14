@@ -16,7 +16,6 @@ instance/
 # Node / Vite
 node_modules/
 frontend/dist/
-frontend/package-lock.json
 
 # Local configuration
 .env
